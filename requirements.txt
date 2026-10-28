@@ -1,0 +1,14 @@
+# LangChain & LangGraph Orchestration
+langchain>=0.3.0
+langchain-core>=0.3.0
+langgraph>=0.2.0
+
+# Google Gemini Integration
+langchain-google-genai>=2.0.0
+
+# Vector Database
+chromadb>=0.5.0
+
+# Environment & Data Validation
+python-dotenv>=1.0.0
+pydantic>=2.0.0
