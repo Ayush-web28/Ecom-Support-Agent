@@ -122,20 +122,23 @@ GEMINI_API_KEY=AIzaSy...your_gemini_api_key_here
 
 ### 3. Run the Interactive Support Agent
 ```powershell
-python main.py
+.\.venv\Scripts\python main.py
 ```
 
 ### 4. Run the Test Suites
 ```powershell
 # Test ChromaDB Retrieval
-python tests/test_retrieval.py
+.\.venv\Scripts\python tests/test_retrieval.py
 
 # Test Intent Router
-python tests/test_router.py
+.\.venv\Scripts\python tests/test_router.py
 
 # Test Conversational Query Rewriting
-python tests/test_rewriter.py
+.\.venv\Scripts\python tests/test_rewriter.py
 
 # Test Complete LangGraph Workflow
-python tests/test_graph.py
+.\.venv\Scripts\python tests/test_graph.py
+
+# Test End-to-End Suite
+.\.venv\Scripts\python tests/test_end_to_end.py
 ```
