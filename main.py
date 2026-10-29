@@ -8,9 +8,13 @@ Run with:
 import sys
 import io
 import uuid
+import warnings
 from pathlib import Path
 from dotenv import load_dotenv
 from langchain_core.messages import HumanMessage
+
+# Suppress minor SDK user warnings for clean terminal display
+warnings.filterwarnings("ignore", category=UserWarning)
 
 # Force UTF-8 on Windows consoles
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')

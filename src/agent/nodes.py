@@ -27,7 +27,7 @@ def get_llm(temperature: float = 0.0) -> ChatGoogleGenerativeAI:
     """Returns Gemini LLM instance with retry parameters."""
     api_key = os.getenv("GEMINI_API_KEY")
     return ChatGoogleGenerativeAI(
-        model="gemini-2.5-flash-lite",
+        model="gemini-3.5-flash-lite",
         temperature=temperature,
         google_api_key=api_key,
         max_retries=0,
