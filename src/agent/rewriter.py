@@ -48,9 +48,10 @@ def get_rewriter_llm() -> ChatGoogleGenerativeAI:
         raise ValueError("GEMINI_API_KEY is missing from environment or .env file.")
 
     return ChatGoogleGenerativeAI(
-        model="gemini-3-flash-preview",
+        model="gemini-2.5-flash-lite",
         temperature=0.0,
         google_api_key=api_key,
+        max_retries=0,
     )
 
 

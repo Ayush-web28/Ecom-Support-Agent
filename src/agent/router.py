@@ -90,9 +90,10 @@ def get_router_llm() -> ChatGoogleGenerativeAI:
         raise ValueError("GEMINI_API_KEY is missing from environment or .env file.")
 
     return ChatGoogleGenerativeAI(
-        model="gemini-3-flash-preview",
+        model="gemini-2.5-flash-lite",
         temperature=0.0,  # 0.0 ensures deterministic, consistent classification
         google_api_key=api_key,
+        max_retries=0,
     )
 
 
@@ -126,19 +127,14 @@ def classify_intent(query: str, chat_history: Optional[str] = None) -> RouteQuer
     ])
     chain = prompt | structured_llm
 
-    for attempt in range(5):
-        try:
-            return chain.invoke({
-                "query": query,
-                "history": chat_history or "No previous history."
-            })
-        except Exception as e:
-            if "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e) or "RateLimitError" in type(e).__name__:
-                time.sleep(2.0 * (attempt + 1))
-            else:
-                raise e
-
-    return chain.invoke({
-        "query": query,
-        "history": chat_history or "No previous history."
-    })
+    try:
+        return chain.invoke({
+            "query": query,
+            "history": chat_history or "No previous history."
+        })
+    except Exception as e:
+        err_msg = str(e)
+        if "429" in err_msg or "RESOURCE_EXHAUSTED" in err_msg or "RateLimitError" in type(e).__name__:
+            # Re-raise cleanly so the application informs the user immediately
+            raise e
+        raise e

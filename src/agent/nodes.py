@@ -27,23 +27,27 @@ def get_llm(temperature: float = 0.0) -> ChatGoogleGenerativeAI:
     """Returns Gemini LLM instance with retry parameters."""
     api_key = os.getenv("GEMINI_API_KEY")
     return ChatGoogleGenerativeAI(
-        model="gemini-3-flash-preview",
+        model="gemini-2.5-flash-lite",
         temperature=temperature,
         google_api_key=api_key,
-        max_retries=6,
+        max_retries=0,
     )
 
 
-def safe_invoke(runnable: Any, input_data: Any, max_attempts: int = 5) -> Any:
-    """Invokes a LangChain runnable with exponential backoff on 429 rate limits."""
+def safe_invoke(runnable: Any, input_data: Any, max_attempts: int = 3) -> Any:
+    """Invokes a LangChain runnable with brief backoff on temporary rate limits."""
     for attempt in range(max_attempts):
         try:
             return runnable.invoke(input_data)
         except Exception as e:
             err_msg = str(e)
+            # If it's a daily quota limit, fail immediately so user knows to refresh their key
+            if "limit: 20" in err_msg or "per day" in err_msg or "daily" in err_msg.lower():
+                raise e
             if "429" in err_msg or "RESOURCE_EXHAUSTED" in err_msg or "RateLimitError" in type(e).__name__:
-                wait_time = 2.0 * (attempt + 1)
-                time.sleep(wait_time)
+                if attempt == max_attempts - 1:
+                    raise e
+                time.sleep(1.5 * (attempt + 1))
             else:
                 raise e
     return runnable.invoke(input_data)
