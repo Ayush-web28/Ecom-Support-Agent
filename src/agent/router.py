@@ -10,6 +10,7 @@ into discrete routes:
 """
 
 import os
+import time
 from typing import Literal, Optional
 from dotenv import load_dotenv
 from pydantic import BaseModel, Field
@@ -89,7 +90,7 @@ def get_router_llm() -> ChatGoogleGenerativeAI:
         raise ValueError("GEMINI_API_KEY is missing from environment or .env file.")
 
     return ChatGoogleGenerativeAI(
-        model="gemini-2.5-flash-lite",
+        model="gemini-3-flash-preview",
         temperature=0.0,  # 0.0 ensures deterministic, consistent classification
         google_api_key=api_key,
     )
@@ -124,8 +125,20 @@ def classify_intent(query: str, chat_history: Optional[str] = None) -> RouteQuer
         ("human", "Customer Message: {query}\n\nRecent History Context: {history}"),
     ])
     chain = prompt | structured_llm
-    result = chain.invoke({
+
+    for attempt in range(5):
+        try:
+            return chain.invoke({
+                "query": query,
+                "history": chat_history or "No previous history."
+            })
+        except Exception as e:
+            if "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e) or "RateLimitError" in type(e).__name__:
+                time.sleep(2.0 * (attempt + 1))
+            else:
+                raise e
+
+    return chain.invoke({
         "query": query,
         "history": chat_history or "No previous history."
     })
-    return result

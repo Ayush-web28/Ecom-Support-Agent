@@ -7,6 +7,7 @@ into standalone, unambiguous semantic search queries for vector retrieval.
 """
 
 import os
+import time
 from typing import List, Union
 from dotenv import load_dotenv
 
@@ -47,7 +48,7 @@ def get_rewriter_llm() -> ChatGoogleGenerativeAI:
         raise ValueError("GEMINI_API_KEY is missing from environment or .env file.")
 
     return ChatGoogleGenerativeAI(
-        model="gemini-2.5-flash-lite",
+        model="gemini-3-flash-preview",
         temperature=0.0,
         google_api_key=api_key,
     )
@@ -98,10 +99,31 @@ def rewrite_query(query: str, chat_history: Union[List[BaseMessage], List[dict],
 
     chain = prompt | llm
 
-    response = chain.invoke({
-        "history": formatted_history,
-        "query": query,
-    })
+    response = None
+    for attempt in range(5):
+        try:
+            response = chain.invoke({
+                "history": formatted_history,
+                "query": query,
+            })
+            break
+        except Exception as e:
+            if "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e) or "RateLimitError" in type(e).__name__:
+                time.sleep(2.0 * (attempt + 1))
+            else:
+                raise e
 
-    rewritten = response.content.strip().strip('"').strip("'")
+    if response is None:
+        response = chain.invoke({
+            "history": formatted_history,
+            "query": query,
+        })
+
+    content = response.content
+    if isinstance(content, list):
+        raw_text = "".join([p.get("text", "") if isinstance(p, dict) else str(p) for p in content])
+    else:
+        raw_text = str(content)
+
+    rewritten = raw_text.strip().strip('"').strip("'")
     return rewritten if rewritten else query
